@@ -1,0 +1,16 @@
+'''
+multi_collinearity 실행
+'''
+
+fixed_column_list=['LATE_RATE','ST_TI_RT','TI_PAR_SCAR','SP_DO_GAM','RB_TYPE','EK_TYPE','WORK_YEAR','ST_TI_RT','RB_CNT','PARENT_COUNSEL_CNT','AB_TYPE','AB_LONG','ST_EFFORT','_RB_CNT','AVE_WORK','UM_JOB','_AB_LONG','ST_REA','ST_ACH']
+continuous_columns = ['FAMILY_CNT','STAY_CLASS_DATE','RETURN_CNT','CLASS_MOVE_CNT','LEVEL_UP','OFF_DATE','PARENT_COUNSEL_CNT','LEVELTEST_RESULT_NO','ATTEND_RATE','LATE_RATE','CLASS_CNT','COMMENT_TEXT_NUM','NORM_ESSAY_ME','DAILY_DATE_CNT','NORM_ME_TOTAL','NORM_ME_VOCA','NORM_ME_LC','NORM_ME_RC','NORM_ME_GRM','HOMEWORK_num_NORM_HW','BEHAVIOR_num_NORM_BH','TI_AGE','WORK_YEAR','LEAVE_DATE','CLASS_CNT','YEAR_NU','SMS_CNT','SMS_CNT_EXP','TEST_CNT','TEST_CNT_EXP','NOW_CNT','PAY_CNT','PAY_PER','REG_CNT','HOL_CNT','DEL_CNT','DEL_PER','IN_CNT','OUT_CNT','CAMP_IN_CNT','CAMP_OUT_CNT','MON_AVE_TAR','AVE_WORK','AB_LONG','PE_LONG','PE_STOP','SP_LONG','_CT_LONG','RB_CNT','SI_NU','ST_REA','ST_ACH','ST_EFFORT','DYB_HW_PREP','DYB_HW_LONG','DYB_TEST_PREP','DYB_TEST_LONG','DYB_DTEST_LONG','AC_CNT','AC_TIME','CLA_CON','CLA_PARTI','HW_PERF','REL_AFFCT','REL_SPEED','REL_CURR','SC_ETSCORE','ST_TI_FR','ST_TI_APPRO','ST_TI_STR','ST_TI_BESST','ST_TI_HW','TI_ST_REA','TI_ST_ACH','TI_ST_EFFORT','TI_ST_CLA_CON','TI_ST_CLA_PARTI','TI_ST_HW_PERF','TI_ST_REL_AFFECT','TI_ST_REL_SPEED','TI_ST_REL_CURR','TI_ST_HW','TI_ST_HW_SIN','TI_ST_DTEST_PF','JTOF_LIS','JTOF_LAG','JTOF_RED','JTOF_TOT','TI_PAR_FRE','TI_PAR_REL','TI_PAR_SCAR','PAR_LA','PAR_ATT']
+
+# reduce_multi_collinearity(continous_columns_list=continuous_columns,fixed_column_list=fixed_column_list,
+#                           X='연도별_X_3000_new',Y='연도별_Y_3000_new')
+
+campus_list= ['대치','송파','수지','분당','평촌']
+for _campus in campus_list:
+    reduce_multi_collinearity(XY_xlsx_name='2안_학생별_연도별_CAMP',xlsx_Y_col_name='ST_RANK_TOTAL',XY_xlsx_sheet_name=f'{_campus}_XY',
+                              continous_columns_list=continuous_columns,fixed_column_list=fixed_column_list)
+    
+
