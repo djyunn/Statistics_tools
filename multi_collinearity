@@ -1,0 +1,95 @@
+import statsmodels
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+
+
+def write_df_to_csv(_dataframe,output_name):
+    _dataframe.to_csv(f'{output_name}.csv',mode='w',encoding='utf-8-sig',index=False)
+ 
+def write_df_to_xlsx(_dataframe,output_name):
+    _dataframe.to_excel(f'{output_name}.csv',sheet_name=output_name,encoding='utf-8-sig',index=False,engine='xlsxwriter')
+    
+def results_summary_to_dataframe(results):
+    '''take the result of an statsmodel results table and transforms it into a dataframe'''
+    pvals = results.pvalues
+    coeff = results.params
+    conf_lower = results.conf_int()[0]
+    conf_higher = results.conf_int()[1]
+
+#     results_df = pd.DataFrame({"pvals":pvals,
+#                                "coeff":coeff,
+#                                "conf_lower":conf_lower,
+#                                "conf_higher":conf_higher
+#                                 })
+    results_df = pd.DataFrame({"pvals":pvals,
+                               "coeff":coeff
+                                })
+    
+    #Reordering...
+    results_df = results_df[["coeff","pvals"]]
+    
+#     #0.05미만 만 출력
+#     is_call = results_df['pvals'] <= 0.05
+#     return results_df[is_call]
+    return results_df
+
+def _read_csv(_file):
+    try:
+        csv=open(_file, 'r',encoding='ANSI')
+        df=pd.read_csv(csv,sep=',',error_bad_lines=False)
+    except:
+        df=pd.read_csv(_file,sep=',',error_bad_lines=False)
+    return df
+
+
+
+def _read_xlsx(_file,_sheet_name=None):
+    return pd.read_excel(f'{_file}.xlsx',sheet_name=f'{_sheet_name}',sep=',',error_bad_lines=False)
+
+
+def reduce_multi_collinearity(XY_xlsx_name=None,XY_xlsx_sheet_name=None,csv_X=None, csv_Y=None,xlsx_Y_col_name=None,
+                              continous_columns_list=None,fixed_column_list=None):
+    ''' 
+    0) Datafile이 X와 Y가 따로 있는지, 아니면 한 xlsx안에 있는지 확인 후 진행
+    1) Dataset에서 continuous var 만 뽑아내기 (범주형변수는 다중공선성VIF를 뽑을 수 없음)
+    2) continuous vars 만 VIF 보기
+    3) VIF값 > n 이상은 삭제하기 (기본적으로 10이상 제거)
+    4) continous vars + categorical vars 합쳐서 regression 뽑아내기
+    
+    *** Output: eli_VIF_regressions.csv
+    '''
+#     try:
+#         x = _read_csv(csv_X)
+#         y = _read_csv(csv_Y)
+#     except:
+    dataset=_read_xlsx(XY_xlsx_name,XY_xlsx_sheet_name)
+    x=dataset[dataset.columns.difference([xlsx_Y_col_name])]
+    y=dataset[[xlsx_Y_col_name]]
+    
+    X_without_categor=x[continuous_columns]
+    mod_without_categor= sm.OLS(y, X_without_categor)
+    statsmodels.stats.outliers_influence.variance_inflation_factor(mod_without_categor.exog, 1)
+    X_VIFs=pd.DataFrame({'컬럼': column, 'VIF': variance_inflation_factor(mod_without_categor.exog, i)} 
+             for i, column in enumerate(mod_without_categor.exog_names)
+             if column != 'Intercept')  # 절편의 VIF는 구하지 않는다.    to_csv("VIF_X.csv",encoding='utf-8-sig')
+    
+    
+    X_VIFS_more10_cols = X_VIFs.loc[X_VIFs['VIF'] >= 10]['컬럼'].to_list()
+    #col_intersection=list(X_VIFS_more10_cols.intersection(fixed_column_list))
+    X_VIFS_more10_cols_fixed = [x for x in X_VIFS_more10_cols if x not in fixed_column_list]
+    X_without_VIFs10 = x.drop(X_VIFS_more10_cols_fixed,axis='columns')
+    try:
+        mod= sm.OLS(y, X_without_VIFs10)
+        res = mod.fit()
+        print(res.summary())
+    except:
+        y=y.iloc[:,[1]] # y dims 가 index포함해서 2개일 수 있음
+        mod= sm.OLS(y, X_without_VIFs10)
+        res = mod.fit()
+        print(res.summary())
+    write_df_to_csv(pd.DataFrame(X_without_VIFs10.columns),f'{XY_xlsx_sheet_name}_X_columns')
+    write_df_to_csv(results_summary_to_dataframe(res),f'{XY_xlsx_sheet_name}_eli_VIF_regressions')
+#   write_df_to_csv(pd.concat([pd.DataFrame(X_without_VIFs10.columns),results_summary_to_dataframe(res)],axis=1),'eliiii_VIF_regressions')
+    
